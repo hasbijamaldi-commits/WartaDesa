@@ -3,165 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WARTA DESA - Kabar Fakta & Kegiatan Daerah</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-    <style>
-        :root { --p: #064e3b; --s: #10b981; --bg: #f4f7f6; --text: #1f2937; }
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
-        
-        /* Navbar */
-        nav { background: var(--p); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .logo { font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; cursor: pointer; }
-        .admin-btn { background: var(--s); border: none; color: white; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        .admin-btn:hover { background: #059669; }
-
-        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
-
-        /* Panel Tulis Berita */
-        #admin-panel { background: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; display: none; border: 2px solid var(--s); box-shadow: 0 10px 25px rgba(0,0,0,0.1); animation: slideDown 0.4s ease; }
-        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
-        label { font-weight: 600; display: block; margin-top: 15px; }
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-        .publish-btn { background: var(--p); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; margin-top: 15px; }
-
-        /* Kartu Berita */
-        .card { background: white; border-radius: 15px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-        .card img { width: 100%; height: 300px; object-fit: cover; background: #eee; }
-        .card-body { padding: 25px; }
-        .date { font-size: 0.85rem; color: #6b7280; font-weight: 500; }
-        .title { font-size: 1.6rem; margin: 12px 0; color: var(--p); font-weight: 800; line-height: 1.3; }
-        .excerpt { color: #4b5563; margin-bottom: 20px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        
-        /* Actions */
-        .actions { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f3f4f6; padding-top: 20px; }
-        .read-more { color: var(--p); font-weight: 700; text-decoration: none; cursor: pointer; }
-        .btn-group { display: flex; gap: 10px; }
-        .share-wa { background: #25d366; color: white; padding: 8px 16px; border-radius: 50px; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .delete-btn { color: #f87171; background: none; border: none; cursor: pointer; font-size: 1.1rem; }
-
-        /* Full Reading Modal */
-        #full-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; overflow-y: auto; }
-        .back-btn { background: #f3f4f6; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: inline-block; margin: 20px 0; font-weight: 600; }
-
-        footer { text-align: center; padding: 50px 20px; color: #9ca3af; font-size: 0.9rem; }
-    </style>
-</head>
-<body>
-
-<nav>
-    <div class="logo" onclick="location.reload()">WARTA DESA</div>
-    <button class="admin-btn" onclick="toggleAdmin()"><i class="fas fa-plus-circle"></i> Tulis Berita</button>
-</nav>
-
-<div class="container">
-    <div id="admin-panel">
-        <h2 style="margin:0 0 10px 0; color:var(--p);">✍️ Input Berita Baru</h2>
-        <p style="color:#666; font-size: 0.9rem; margin-bottom: 20px;">Berita yang Anda tulis akan langsung tampil di halaman depan.</p>
-        
-        <label>Judul Berita</label>
-        <input type="text" id="judulInput" placeholder="Contoh: Warga Desa Gotong Royong Perbaiki Jembatan">
-        
-        <label>Foto Dokumentasi</label>
-        <input type="file" id="fotoInput" accept="image/*">
-        
-        <label>Isi Berita Lengkap</label>
-        <textarea id="isiInput" rows="10" placeholder="Ceritakan kejadian selengkapnya..."></textarea>
-        
-        <button class="publish-btn" onclick="terbitkan()">Terbitkan Sekarang</button>
-    </div>
-
-    <div id="news-feed"></div>
-</div>
-
-<div id="full-view">
-    <div class="container">
-        <div class="back-btn" onclick="closeFull()"><i class="fas fa-arrow-left"></i> Kembali ke Beranda</div>
-        <div id="full-content"></div>
-    </div>
-</div>
-
-<footer>
-    <p><strong>Warta Desa</strong> &copy; 2026</p>
-    <p>Dikembangkan untuk Jurnalisme Warga Daerah</p>
-</footer>
-
-<script>
-    let currentImageBase64 = "";
-
-    // Convert Foto ke Base64 (Agar bisa simpan di browser)
-    document.getElementById('fotoInput').addEventListener('change', function(e) {
-        const reader = new FileReader();
-        reader.onload = () => currentImageBase64 = reader.result;
-        if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
-    });
-
-    // Buka/Tutup Panel Admin
-    function toggleAdmin() {
-        const panel = document.getElementById('admin-panel');
-        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        if(panel.style.display === 'block') window.scrollTo({top: 0, behavior: 'smooth'});
-    }
-
-    // Fungsi Simpan Berita
-    function terbitkan() {
-        const judul = document.getElementById('judulInput').value;
-        const isi = document.getElementById('isiInput').value;
-        const tanggal = new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-
-        if(!judul || !isi) return alert("Harap isi judul dan konten berita!");
-
-        const beritaBaru = {
-            id: Date.now(),
-            judul: judul,
-            isi: isi,
-            foto: currentImageBase64 || "https://via.placeholder.com/800x450?text=Warta+Desa",
-            tanggal: tanggal
-        };
-
-        let db = JSON.parse(localStorage.getItem('warta_desa_final_db')) || [];
-        db.unshift(beritaBaru);
-        localStorage.setItem('warta_desa_final_db', JSON.stringify(db));
-
-        alert("Berita Berhasil Terbit!");
-        location.reload(); // Refresh untuk update feed
-    }
-
-    // Fungsi Tampilkan Berita
-    function renderFeed() {
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WARTA DESA - Media Informasi Daerah</title>
+    <title>WARTA DESA - Media Informasi Digital</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <style>
         :root { --p: #064e3b; --s: #10b981; --bg: #f4f7f6; --text: #1f2937; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: var(--text); }
         
-        /* Navbar Pembaca */
+        /* Navbar */
         nav { background: var(--p); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .logo { font-size: 1.6rem; font-weight: 800; cursor: pointer; }
-        
-        /* Tombol Tersembunyi untuk Admin (Klik Logo/Icon ini untuk login) */
-        .admin-lock { color: rgba(255,255,255,0.3); cursor: pointer; font-size: 0.8rem; }
+        .admin-trigger { color: rgba(255,255,255,0.2); cursor: pointer; font-size: 0.7rem; }
 
         .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
 
-        /* Panel Admin (Hidden by Default) */
-        #admin-dashboard { 
+        /* Panel Admin (Hanya muncul jika login sukses) */
+        #admin-panel { 
             display: none; 
             background: #fff; 
-            padding: 20px; 
+            padding: 25px; 
             border-radius: 15px; 
-            border: 2px solid var(--s); 
+            border: 3px solid var(--s); 
             margin-bottom: 30px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        /* Kartu Berita */
+        /* Feed Berita */
         .card { background: white; border-radius: 15px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .card img { width: 100%; height: 280px; object-fit: cover; }
         .card-body { padding: 20px; }
@@ -170,33 +36,42 @@
         .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
         .share-wa { background: #25d366; color: white; padding: 8px 15px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.8rem; }
         
-        /* Tombol Hapus (Hanya muncul jika admin login) */
-        .btn-delete-admin { display: none; color: red; border: none; background: none; cursor: pointer; }
+        /* Tombol Hapus Rahasia */
+        .admin-only { display: none; }
+        .delete-btn { color: #ff4d4d; border: none; background: none; cursor: pointer; font-size: 1.1rem; }
 
         /* Full View */
         #full-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-pub { background: var(--p); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <nav>
     <div class="logo" onclick="location.reload()">WARTA DESA</div>
-    <div class="admin-lock" onclick="loginAdmin()"><i class="fas fa-lock"></i></div>
+    <div class="admin-trigger" onclick="mintaAkses()"><i class="fas fa-shield-alt"></i> Admin</div>
 </nav>
 
 <div class="container">
-    <div id="admin-dashboard">
-        <div style="display:flex; justify-content:space-between;">
-            <h2 style="margin:0; color:var(--s);">Dashboard Wartawan</h2>
-            <button onclick="logoutAdmin()" style="cursor:pointer;">Keluar</button>
+    <div id="admin-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="margin:0; color:var(--p);">Mode Wartawan Aktif</h2>
+            <button onclick="keluarAdmin()" style="background:#eee; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Keluar</button>
         </div>
-        <hr>
-        <label>Judul Berita</label>
-        <input type="text" id="jInput" style="width:100%; padding:10px; margin:10px 0;" placeholder="Judul...">
-        <label>Foto</label>
-        <input type="file" id="fInput" style="margin:10px 0;">
-        <textarea id="iInput" rows="5" style="width:100%; padding:10px;" placeholder="Isi berita..."></textarea>
-        <button onclick="publish()" style="width:100%; background:var(--p); color:white; padding:12px; margin-top:10px; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Terbitkan Berita</button>
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+        
+        <label>Judul Liputan</label>
+        <input type="text" id="judulInput" placeholder="Ketik judul berita...">
+        
+        <label>Foto Lampiran</label>
+        <input type="file" id="fotoInput" accept="image/*">
+        
+        <label>Isi Berita</label>
+        <textarea id="isiInput" rows="6" placeholder="Tulis rincian kejadian..."></textarea>
+        
+        <button class="btn-pub" onclick="gasTerbitkan()">Terbitkan ke Publik</button>
     </div>
 
     <div id="news-feed"></div>
@@ -204,64 +79,71 @@
 
 <div id="full-view">
     <div class="container">
-        <button onclick="closeFull()" style="margin-bottom:20px; cursor:pointer;">&larr; Kembali</button>
+        <button onclick="tutupBaca()" style="margin-bottom:20px; cursor:pointer; padding:10px; border-radius:5px; border:none; background:#f0f0f0;">&larr; Kembali ke Beranda</button>
         <div id="full-content"></div>
     </div>
 </div>
 
 <script>
-    let rawImg = "";
-    const ADMIN_PASS = "ciamis123"; // GANTI PASSWORD KAMU DI SINI
+    let imgBase64 = "";
+    const KODE_RAHASIA = "ciamis123"; // INI PASSWORD KAMU
 
-    // Handle Image
-    document.getElementById('fInput').addEventListener('change', function(e) {
+    // Handle Gambar
+    document.getElementById('fotoInput').addEventListener('change', function(e) {
         let r = new FileReader();
-        r.onload = () => rawImg = r.result;
+        r.onload = () => imgBase64 = r.result;
         if(e.target.files[0]) r.readAsDataURL(e.target.files[0]);
     });
 
-    // Fungsi Login Admin
-    function loginAdmin() {
-        let pass = prompt("Masukkan Password Wartawan:");
-        if(pass === ADMIN_PASS) {
-            sessionStorage.setItem('isAdmin', 'true');
-            alert("Halo Wartawan! Menu tulis berita sekarang muncul.");
-            checkAdminStatus();
+    // Fungsi Masuk Mode Admin
+    function mintaAkses() {
+        let k = prompt("Masukkan Kode Akses Wartawan:");
+        if(k === KODE_RAHASIA) {
+            sessionStorage.setItem('sesiAdmin', 'aktif');
+            tampilkanFiturAdmin();
         } else {
-            alert("Password salah!");
+            alert("Kode salah!");
         }
     }
 
-    function logoutAdmin() {
-        sessionStorage.removeItem('isAdmin');
+    function keluarAdmin() {
+        sessionStorage.removeItem('sesiAdmin');
         location.reload();
     }
 
-    function checkAdminStatus() {
-        const isAdmin = sessionStorage.getItem('isAdmin');
-        if(isAdmin === 'true') {
-            document.getElementById('admin-dashboard').style.display = 'block';
-            document.querySelectorAll('.btn-delete-admin').forEach(b => b.style.display = 'block');
+    function tampilkanFiturAdmin() {
+        const cek = sessionStorage.getItem('sesiAdmin');
+        if(cek === 'aktif') {
+            document.getElementById('admin-panel').style.display = 'block';
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
         }
     }
 
-    function publish() {
-        let j = document.getElementById('jInput').value;
-        let i = document.getElementById('iInput').value;
-        let t = new Date().toLocaleDateString('id-ID');
-        if(!j || !i) return alert("Lengkapi data!");
+    // Terbitkan Berita
+    function gasTerbitkan() {
+        let j = document.getElementById('judulInput').value;
+        let i = document.getElementById('isiInput').value;
+        let t = new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
 
-        let db = JSON.parse(localStorage.getItem('warta_v2')) || [];
-        db.unshift({ j, i, f: rawImg || 'https://via.placeholder.com/800x400', t });
-        localStorage.setItem('warta_v2', JSON.stringify(db));
+        if(!j || !i) return alert("Judul dan Isi wajib diisi!");
+
+        let data = JSON.parse(localStorage.getItem('warta_v3')) || [];
+        data.unshift({ j, i, f: imgBase64 || 'https://via.placeholder.com/800x400?text=Warta+Desa', t });
+        localStorage.setItem('warta_v3', JSON.stringify(data));
+
+        alert("Berita sudah online!");
         location.reload();
     }
 
-    function render() {
-        let db = JSON.parse(localStorage.getItem('warta_v2')) || [];
+    // Tampilkan Berita ke Layar
+    function muatBerita() {
+        let data = JSON.parse(localStorage.getItem('warta_v3')) || [];
+        let box = document.getElementById('news-feed');
         let html = '';
-        db.forEach((item, index) => {
-            let waLink = `https://api.whatsapp.com/send?text=*${encodeURIComponent(item.j)}*%0A%0ABaca di: ${window.location.href}`;
+
+        data.forEach((item, index) => {
+            let linkWA = `https://api.whatsapp.com/send?text=*${encodeURIComponent(item.j)}*%0A%0ABaca selengkapnya di: ${window.location.href}`;
+            
             html += `
                 <div class="card">
                     <img src="${item.f}">
@@ -269,34 +151,37 @@
                         <div style="font-size:0.8rem; color:gray;">${item.t}</div>
                         <h2 class="title">${item.j}</h2>
                         <div class="actions">
-                            <span onclick="openFull(${index})" style="color:var(--p); font-weight:bold; cursor:pointer;">Baca Selengkapnya</span>
-                            <div style="display:flex; gap:10px; align-items:center;">
-                                <a href="${waLink}" target="_blank" class="share-wa"><i class="fab fa-whatsapp"></i> Share</a>
-                                <button class="btn-delete-admin" onclick="del(${index})"><i class="fas fa-trash"></i></button>
+                            <span onclick="bacaDetail(${index})" style="color:var(--p); font-weight:bold; cursor:pointer;">Baca Selengkapnya...</span>
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <a href="${linkWA}" target="_blank" class="share-wa"><i class="fab fa-whatsapp"></i> Share</a>
+                                <button class="admin-only delete-btn" onclick="hapus(${index})"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
         });
-        document.getElementById('news-feed').innerHTML = html || '<p style="text-align:center; color:gray;">Belum ada berita.</p>';
-        checkAdminStatus();
+        box.innerHTML = html || '<p style="text-align:center; padding:50px; color:gray;">Belum ada berita terbit.</p>';
+        tampilkanFiturAdmin();
     }
 
-    function openFull(index) {
-        let item = JSON.parse(localStorage.getItem('warta_v2'))[index];
+    function bacaDetail(idx) {
+        let item = JSON.parse(localStorage.getItem('warta_v3'))[idx];
         document.getElementById('full-content').innerHTML = `
-            <img src="${item.f}" style="width:100%; border-radius:12px;">
-            <h1>${item.j}</h1>
-            <p style="white-space:pre-wrap; line-height:1.8;">${item.i}</p>
+            <img src="${item.f}" style="width:100%; border-radius:15px; margin-bottom:20px;">
+            <p style="color:gray;">${item.t}</p>
+            <h1 style="color:var(--p);">${item.j}</h1>
+            <div style="white-space:pre-wrap; font-size:1.1rem; line-height:1.7;">${item.i}</div>
         `;
         document.getElementById('full-view').style.display = 'block';
+        window.scrollTo(0,0);
     }
 
-    function closeFull() { document.getElementById('full-view').style.display = 'none'; }
-    function del(index) { if(confirm("Hapus?")) { let db = JSON.parse(localStorage.getItem('warta_v2')); db.splice(index,1); localStorage.setItem('warta_v2', JSON.stringify(db)); render(); } }
+    function tutupBaca() { document.getElementById('full-view').style.display = 'none'; }
+    function hapus(idx) { if(confirm("Hapus berita ini?")) { let d = JSON.parse(localStorage.getItem('warta_v3')); d.splice(idx,1); localStorage.setItem('warta_v3', JSON.stringify(d)); muatBerita(); } }
 
-    render();
+    muatBerita();
 </script>
 </body>
 </html>
+
