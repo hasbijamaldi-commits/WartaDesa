@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WARTA DESA - Kabar Fakta & Kegiatan Daerah</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        :root { --p: #064e3b; --s: #10b981; --bg: #f4f7f6; --text: #1f2937; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+        
+        /* Navbar */
+        nav { background: var(--p); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo { font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; cursor: pointer; }
+        .admin-btn { background: var(--s); border: none; color: white; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .admin-btn:hover { background: #059669; }
+
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+
+        /* Panel Tulis Berita */
+        #admin-panel { background: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; display: none; border: 2px solid var(--s); box-shadow: 0 10px 25px rgba(0,0,0,0.1); animation: slideDown 0.4s ease; }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        label { font-weight: 600; display: block; margin-top: 15px; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        .publish-btn { background: var(--p); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; margin-top: 15px; }
+
+        /* Kartu Berita */
+        .card { background: white; border-radius: 15px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .card img { width: 100%; height: 300px; object-fit: cover; background: #eee; }
+        .card-body { padding: 25px; }
+        .date { font-size: 0.85rem; color: #6b7280; font-weight: 500; }
+        .title { font-size: 1.6rem; margin: 12px 0; color: var(--p); font-weight: 800; line-height: 1.3; }
+        .excerpt { color: #4b5563; margin-bottom: 20px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        /* Actions */
+        .actions { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f3f4f6; padding-top: 20px; }
+        .read-more { color: var(--p); font-weight: 700; text-decoration: none; cursor: pointer; }
+        .btn-group { display: flex; gap: 10px; }
+        .share-wa { background: #25d366; color: white; padding: 8px 16px; border-radius: 50px; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .delete-btn { color: #f87171; background: none; border: none; cursor: pointer; font-size: 1.1rem; }
+
+        /* Full Reading Modal */
+        #full-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; overflow-y: auto; }
+        .back-btn { background: #f3f4f6; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: inline-block; margin: 20px 0; font-weight: 600; }
+
+        footer { text-align: center; padding: 50px 20px; color: #9ca3af; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo" onclick="location.reload()">WARTA DESA</div>
+    <button class="admin-btn" onclick="toggleAdmin()"><i class="fas fa-plus-circle"></i> Tulis Berita</button>
+</nav>
+
+<div class="container">
+    <div id="admin-panel">
+        <h2 style="margin:0 0 10px 0; color:var(--p);">✍️ Input Berita Baru</h2>
+        <p style="color:#666; font-size: 0.9rem; margin-bottom: 20px;">Berita yang Anda tulis akan langsung tampil di halaman depan.</p>
+        
+        <label>Judul Berita</label>
+        <input type="text" id="judulInput" placeholder="Contoh: Warga Desa Gotong Royong Perbaiki Jembatan">
+        
+        <label>Foto Dokumentasi</label>
+        <input type="file" id="fotoInput" accept="image/*">
+        
+        <label>Isi Berita Lengkap</label>
+        <textarea id="isiInput" rows="10" placeholder="Ceritakan kejadian selengkapnya..."></textarea>
+        
+        <button class="publish-btn" onclick="terbitkan()">Terbitkan Sekarang</button>
+    </div>
+
+    <div id="news-feed"></div>
+</div>
+
+<div id="full-view">
+    <div class="container">
+        <div class="back-btn" onclick="closeFull()"><i class="fas fa-arrow-left"></i> Kembali ke Beranda</div>
+        <div id="full-content"></div>
+    </div>
+</div>
+
+<footer>
+    <p><strong>Warta Desa</strong> &copy; 2026</p>
+    <p>Dikembangkan untuk Jurnalisme Warga Daerah</p>
+</footer>
+
+<script>
+    let currentImageBase64 = "";
+
+    // Convert Foto ke Base64 (Agar bisa simpan di browser)
+    document.getElementById('fotoInput').addEventListener('change', function(e) {
+        const reader = new FileReader();
+        reader.onload = () => currentImageBase64 = reader.result;
+        if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+    });
+
+    // Buka/Tutup Panel Admin
+    function toggleAdmin() {
+        const panel = document.getElementById('admin-panel');
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        if(panel.style.display === 'block') window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    // Fungsi Simpan Berita
+    function terbitkan() {
+        const judul = document.getElementById('judulInput').value;
+        const isi = document.getElementById('isiInput').value;
+        const tanggal = new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+        if(!judul || !isi) return alert("Harap isi judul dan konten berita!");
+
+        const beritaBaru = {
+            id: Date.now(),
+            judul: judul,
+            isi: isi,
+            foto: currentImageBase64 || "https://via.placeholder.com/800x450?text=Warta+Desa",
+            tanggal: tanggal
+        };
+
+        let db = JSON.parse(localStorage.getItem('warta_desa_final_db')) || [];
+        db.unshift(beritaBaru);
+        localStorage.setItem('warta_desa_final_db', JSON.stringify(db));
+
+        alert("Berita Berhasil Terbit!");
+        location.reload(); // Refresh untuk update feed
+    }
+
+    // Fungsi Tampilkan Berita
+    function renderFeed() {
+        const db = JSON.parse(localStorage.getItem('warta_desa_final_db')) || [];
+        const container = document.getElementById('news-feed');
+        
+        if(db.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:100px 20px; color:#999;"><h3>Belum Ada Berita</h3><p>Silakan klik tombol "Tulis Berita" untuk memulainya.</p></div>';
+            return;
+        }
+
+        let html = '';
+        db.forEach((item, index) => {
+            // Logika Share WhatsApp agar Link Biru
+            const host = window.location.href; 
+            const waText = `*${encodeURIComponent(item.judul)}*%0A%0A${encodeURIComponent(item.isi.substring(0, 100))}...%0A%0ABaca selengkapnya di: ${host}`;
+            const waLink = `https://api.whatsapp.com/send?text=${waText}`;
+
+            html += `
+                <div class="card">
+                    <img src="${item.foto}" alt="Berita">
+                    <div class="card-body">
+                        <div class="date">${item.tanggal}</div>
+                        <h2 class="title">${item.judul}</h2>
+                        <p class="excerpt">${item.isi}</p>
+                        <div class="actions">
+                            <span class="read-more" onclick="openFull(${index})">Baca Selengkapnya</span>
+                            <div class="btn-group">
+                                <a href="${waLink}" target="_blank" class="share-wa"><i class="fab fa-whatsapp"></i> Share</a>
+                                <button class="delete-btn" onclick="hapusBerita(${index})"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    // Fungsi Buka Artikel Lengkap
+    function openFull(index) {
+        const db = JSON.parse(localStorage.getItem('warta_desa_final_db'));
+        const news = db[index];
+        const content = document.getElementById('full-content');
+
+        content.innerHTML = `
+            <img src="${news.foto}" style="width:100%; border-radius:15px; margin-bottom:25px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+            <div style="color:#666; margin-bottom:10px;">${news.tanggal}</div>
+            <h1 style="color:var(--p); font-size:2.2rem; line-height:1.2; margin-bottom:25px;">${news.judul}</h1>
+            <div style="white-space:pre-wrap; font-size:1.2rem; line-height:1.8; color:#333;">${news.isi}</div>
+            <hr style="margin:40px 0; border:0; border-top:1px solid #eee;">
+            <p style="text-align:center; color:#999;">&copy; 2026 Warta Desa</p>
+        `;
+        document.getElementById('full-view').style.display = 'block';
+        window.scrollTo(0,0);
+    }
+
+    function closeFull() {
+        document.getElementById('full-view').style.display = 'none';
+    }
+
+    function hapusBerita(index) {
+        if(confirm("Hapus berita ini selamanya?")) {
+            let db = JSON.parse(localStorage.getItem('warta_desa_final_db'));
+            db.splice(index, 1);
+            localStorage.setItem('warta_desa_final_db', JSON.stringify(db));
+            renderFeed();
+        }
+    }
+
+    // Jalankan Feed
+    renderFeed();
+</script>
+
+</body>
+</html>
