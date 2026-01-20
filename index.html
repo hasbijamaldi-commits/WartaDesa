@@ -8,27 +8,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 20px; background-color: #f0f2f5; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         h2, h3 { text-align: center; color: #1a73e8; }
         .section-title { background: #1a73e8; color: white; padding: 10px; border-radius: 5px; margin-top: 30px; font-weight: bold; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #cbd5e0; padding: 10px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th, td { border: 1px solid #cbd5e0; padding: 8px; text-align: center; }
         th { background-color: #f8f9fa; }
         
-        /* Hapus panah input */
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; width: 60px; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; text-align: center; }
+        input[type=number] { -moz-appearance: textfield; width: 50px; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; text-align: center; }
         
         .btn-group { margin-top: 20px; text-align: center; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-        button { padding: 12px 24px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; }
+        button { padding: 12px 24px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
         .btn-excel { background-color: #217346; color: white; }
         .btn-jpg { background-color: #d93025; color: white; }
         .btn-reset { background-color: #607d8b; color: white; }
+        button:hover { opacity: 0.8; }
 
         #capture-area { padding: 20px; background: white; }
         .total-row { background-color: #edf2f7; font-weight: bold; }
-        .save-status { text-align: center; color: #2ecc71; font-size: 0.9em; margin-top: 5px; height: 20px; }
+        .col-total { background-color: #f1f8ff; font-weight: bold; color: #1a73e8; }
+        .save-status { text-align: center; color: #2ecc71; font-size: 0.9em; height: 20px; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -37,7 +38,7 @@
     <h2>📊 Pendataan Dusun Cilemor</h2>
     <p class="save-status" id="status"></p>
 
-    <div class="section-title">1. Input Data (Otomatis Tersimpan)</div>
+    <div class="section-title">1. Form Input Data RT</div>
     <table>
         <thead>
             <tr>
@@ -53,17 +54,23 @@
         <tbody id="input-body"></tbody>
     </table>
 
-    <div class="section-title">2. Hasil Laporan</div>
+    <div class="section-title">2. Hasil Laporan & Akumulasi</div>
     <div id="capture-area">
-        <h3 id="judul-laporan">LAPORAN DATA KEPENDUDUKAN DUSUN CILEMOR</h3>
+        <h3 style="margin-bottom: 5px;">LAPORAN DATA KEPENDUDUKAN DUSUN CILEMOR</h3>
+        <p style="text-align:center; margin-top:0; color:#666;">Dicetak secara sistematis</p>
         <table id="result-table">
             <thead>
                 <tr>
-                    <th rowspan="2">RW</th><th rowspan="2">RT</th><th rowspan="2">Total KK</th>
-                    <th colspan="2">Kepala Keluarga</th><th colspan="2">Jumlah Jiwa</th><th colspan="2">Jumlah Bayi</th>
+                    <th rowspan="2">RW</th>
+                    <th rowspan="2">RT</th>
+                    <th colspan="3" style="background:#eef6ff">Data Keluarga (KK)</th>
+                    <th colspan="3" style="background:#fff7ee">Data Jiwa</th>
+                    <th colspan="3" style="background:#f2ffee">Data Bayi</th>
                 </tr>
                 <tr>
-                    <th>L</th><th>P</th><th>L</th><th>P</th><th>L</th><th>P</th>
+                    <th>L</th><th>P</th><th class="col-total">Total</th>
+                    <th>L</th><th>P</th><th class="col-total">Total</th>
+                    <th>L</th><th>P</th><th class="col-total">Total</th>
                 </tr>
             </thead>
             <tbody id="result-body"></tbody>
@@ -72,9 +79,9 @@
     </div>
 
     <div class="btn-group">
-        <button class="btn-excel" onclick="downloadExcel()">📥 Excel</button>
-        <button class="btn-jpg" onclick="downloadJPG()">🖼️ JPG</button>
-        <button class="btn-reset" onclick="resetData()">🔄 Hapus Semua Data</button>
+        <button class="btn-excel" onclick="downloadExcel()">📥 Download Excel</button>
+        <button class="btn-jpg" onclick="downloadJPG()">🖼️ Download Gambar</button>
+        <button class="btn-reset" onclick="resetData()">🔄 Reset Semua Data</button>
     </div>
 </div>
 
@@ -84,7 +91,6 @@
         {rw: "13", rt: ["01", "02", "03"]}
     ];
 
-    // Fungsi Inisialisasi & Load Data
     function init() {
         const inputBody = document.getElementById('input-body');
         let savedData = JSON.parse(localStorage.getItem('dataCilemor')) || {};
@@ -96,12 +102,12 @@
                 
                 const row = `<tr>
                     <td><b>RW ${group.rw}</b></td><td>RT ${rtNo}</td>
-                    <td><input type="number" class="v kkl" data-id="${id}" value="${d.kkl}" oninput="saveAndRefresh()"></td>
-                    <td><input type="number" class="v kkp" data-id="${id}" value="${d.kkp}" oninput="saveAndRefresh()"></td>
-                    <td><input type="number" class="v jl" data-id="${id}" value="${d.jl}" oninput="saveAndRefresh()"></td>
-                    <td><input type="number" class="v jp" data-id="${id}" value="${d.jp}" oninput="saveAndRefresh()"></td>
-                    <td><input type="number" class="v bl" data-id="${id}" value="${d.bl}" oninput="saveAndRefresh()"></td>
-                    <td><input type="number" class="v bp" data-id="${id}" value="${d.bp}" oninput="saveAndRefresh()"></td>
+                    <td><input type="number" class="v kkl" data-id="${id}" value="${d.kkl}" oninput="saveAndRefresh()" placeholder="0"></td>
+                    <td><input type="number" class="v kkp" data-id="${id}" value="${d.kkp}" oninput="saveAndRefresh()" placeholder="0"></td>
+                    <td><input type="number" class="v jl" data-id="${id}" value="${d.jl}" oninput="saveAndRefresh()" placeholder="0"></td>
+                    <td><input type="number" class="v jp" data-id="${id}" value="${d.jp}" oninput="saveAndRefresh()" placeholder="0"></td>
+                    <td><input type="number" class="v bl" data-id="${id}" value="${d.bl}" oninput="saveAndRefresh()" placeholder="0"></td>
+                    <td><input type="number" class="v bp" data-id="${id}" value="${d.bp}" oninput="saveAndRefresh()" placeholder="0"></td>
                 </tr>`;
                 inputBody.innerHTML += row;
             });
@@ -109,7 +115,6 @@
         refreshTable();
     }
 
-    // Simpan ke LocalStorage
     function saveAndRefresh() {
         let currentData = {};
         document.querySelectorAll('#input-body tr').forEach(row => {
@@ -122,40 +127,46 @@
             };
         });
         localStorage.setItem('dataCilemor', JSON.stringify(currentData));
-        
-        document.getElementById('status').innerText = "✅ Perubahan tersimpan otomatis...";
-        setTimeout(() => { document.getElementById('status').innerText = ""; }, 1500);
-        
+        document.getElementById('status').innerText = "Data tersimpan otomatis...";
+        setTimeout(() => { document.getElementById('status').innerText = ""; }, 1000);
         refreshTable();
     }
 
-    // Update Tabel Hasil
     function refreshTable() {
         const rows = document.querySelectorAll('#input-body tr');
         let html = '';
-        let t = { kkl:0, kkp:0, jl:0, jp:0, bl:0, bp:0, tkk:0 };
+        let t = { kkl:0, kkp:0, tkk:0, jl:0, jp:0, tj:0, bl:0, bp:0, tb:0 };
 
         rows.forEach(row => {
             const cells = row.cells;
             const v = (cls) => parseInt(row.querySelector('.'+cls).value) || 0;
             
-            const kkl = v('kkl'), kkp = v('kkp'), jl = v('jl'), jp = v('jp'), bl = v('bl'), bp = v('bp');
-            const totalKK = kkl + kkp;
+            const kkl = v('kkl'), kkp = v('kkp');
+            const jl = v('jl'), jp = v('jp');
+            const bl = v('bl'), bp = v('bp');
+
+            const totKK = kkl + kkp;
+            const totJiwa = jl + jp;
+            const totBayi = bl + bp;
             
-            t.kkl += kkl; t.kkp += kkp; t.tkk += totalKK;
-            t.jl += jl; t.jp += jp; t.bl += bl; t.bp += bp;
+            t.kkl += kkl; t.kkp += kkp; t.tkk += totKK;
+            t.jl += jl; t.jp += jp; t.tj += totJiwa;
+            t.bl += bl; t.bp += bp; t.tb += totBayi;
 
             html += `<tr>
                 <td>${cells[0].innerText}</td><td>${cells[1].innerText}</td>
-                <td style="background:#f9f9f9; font-weight:bold">${totalKK}</td>
-                <td>${kkl}</td><td>${kkp}</td><td>${jl}</td><td>${jp}</td><td>${bl}</td><td>${bp}</td>
+                <td>${kkl}</td><td>${kkp}</td><td class="col-total">${totKK}</td>
+                <td>${jl}</td><td>${jp}</td><td class="col-total">${totJiwa}</td>
+                <td>${bl}</td><td>${bp}</td><td class="col-total">${totBayi}</td>
             </tr>`;
         });
 
         document.getElementById('result-body').innerHTML = html;
         document.getElementById('total-footer').innerHTML = `
-            <td colspan="2">TOTAL KESELURUHAN</td><td>${t.tkk}</td>
-            <td>${t.kkl}</td><td>${t.kkp}</td><td>${t.jl}</td><td>${t.jp}</td><td>${t.bl}</td><td>${t.bp}</td>`;
+            <td colspan="2">TOTAL KESELURUHAN</td>
+            <td>${t.kkl}</td><td>${t.kkp}</td><td class="col-total">${t.tkk}</td>
+            <td>${t.jl}</td><td>${t.jp}</td><td class="col-total">${t.tj}</td>
+            <td>${t.bl}</td><td>${t.bp}</td><td class="col-total">${t.tb}</td>`;
     }
 
     function resetData() {
@@ -167,13 +178,13 @@
 
     function downloadExcel() {
         const wb = XLSX.utils.table_to_book(document.getElementById("result-table"));
-        XLSX.writeFile(wb, "Data_Cilemor.xlsx");
+        XLSX.writeFile(wb, "Data_Cilemor_Lengkap.xlsx");
     }
 
     function downloadJPG() {
         html2canvas(document.querySelector("#capture-area")).then(canvas => {
             const link = document.createElement('a');
-            link.download = 'Laporan_Cilemor.jpg';
+            link.download = 'Laporan_Dusun_Cilemor.jpg';
             link.href = canvas.toDataURL("image/jpeg", 0.9);
             link.click();
         });
